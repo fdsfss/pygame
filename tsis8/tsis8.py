@@ -1,4 +1,3 @@
-# Imports
 import pygame, sys
 from pygame.locals import *
 import random, time
@@ -21,13 +20,14 @@ WHITE = (255, 255, 255)
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 600
 SPEED = 5
+SPEED_COINS = random.randint(1, 5)
 SCORE = 0
 SCORE_COINS = 0
 
 # Setting up Fonts
-font = pygame.font.SysFont("Verdana", 60)
+font = pygame.font.SysFont("Comic Sans", 60)
 font_small = pygame.font.SysFont("Verdana", 20)
-game_over = font.render("Game Over", True, BLACK)
+game_over = font.render("Game Over", True, WHITE)
 
 background = pygame.image.load("AnimatedStreet.png")
 
@@ -74,17 +74,40 @@ class Player(pygame.sprite.Sprite):
             if pressed_keys[K_RIGHT]:
                 self.rect.move_ip(5, 0)
 
+P1 = Player()
+
+class Coin(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load("dollar.png")
+        self.surf = pygame.Surface((30, 30))
+        self.rect = self.surf.get_rect(center=(random.randint(25, SCREEN_WIDTH - 25), 0))
+
+    def move(self):
+        global SCORE_COINS
+        self.rect.move_ip(0, SPEED_COINS)
+        if (self.rect.bottom > 600):
+            self.rect.top = 0
+            self.rect.center = (random.randint(25, SCREEN_WIDTH - 25), 0)
+        if (self.rect.bottom > 480) and self.rect.right >= P1.rect.left and self.rect.left <= P1.rect.right:
+            SCORE_COINS += 1
+            self.rect.top = 0
 
 # Setting up Sprites
-P1 = Player()
 E1 = Enemy()
+C1 = Coin()
 
 # Creating Sprites Groups
 enemies = pygame.sprite.Group()
 enemies.add(E1)
+coins = pygame.sprite.Group()
+coins.add(C1)
 all_sprites = pygame.sprite.Group()
 all_sprites.add(P1)
 all_sprites.add(E1)
+all_sprites.add(C1)
+
+# Creating
 
 # Adding a new User event
 INC_SPEED = pygame.USEREVENT + 1
@@ -92,7 +115,6 @@ pygame.time.set_timer(INC_SPEED, 1000)
 
 # Game Loop
 while True:
-
     # Cycles through all events occuring
     for event in pygame.event.get():
         if event.type == INC_SPEED:
@@ -103,20 +125,27 @@ while True:
 
     DISPLAYSURF.blit(background, (0, 0))
     scores = font_small.render(str(SCORE), True, BLACK)
+    scores_c = font_small.render(str(SCORE_COINS), True, BLACK)
     DISPLAYSURF.blit(scores, (10, 10))
+    DISPLAYSURF.blit(scores_c, (350, 10))
 
     # Moves and Re-draws all Sprites
     for entity in all_sprites:
         DISPLAYSURF.blit(entity.image, entity.rect)
         entity.move()
+    for coin in all_sprites:
+        DISPLAYSURF.blit(coin.image, coin.rect)
+        coin.move()
 
     # To be run if collision occurs between Player and Enemy
     if pygame.sprite.spritecollideany(P1, enemies):
         pygame.mixer.Sound('crash.wav').play()
         time.sleep(1)
 
-        DISPLAYSURF.fill(RED)
-        DISPLAYSURF.blit(game_over, (30, 250))
+        DISPLAYSURF.fill(BLACK)
+        DISPLAYSURF.blit(game_over, (80, 250))
+        text = font_small.render("SCORE: " + str(SCORE_COINS), True, (255, 255, 255))
+        DISPLAYSURF.blit(text, (145, 550))
 
         pygame.display.update()
         for entity in all_sprites:
@@ -124,7 +153,5 @@ while True:
         time.sleep(2)
         pygame.quit()
         sys.exit()
-
     pygame.display.update()
     FramePerSec.tick(FPS)
-pygame.quit()
