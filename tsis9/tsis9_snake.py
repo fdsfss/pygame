@@ -1,5 +1,6 @@
 import pygame
-import random
+from pygame.locals import *
+import random, time
 
 pygame.init()
 
@@ -25,8 +26,11 @@ background = pygame.image.load("background.jpg")
 size = W, H = (1200, 675)
 screen = pygame.display.set_mode(size)
 
-class Snake:
-    def __init__(self, x, y):
+class Snake(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        x = random.randint(0, W)
+        y = random.randint(0, H)
         self.size = 1
         self.elements = [[x, y]]
         self.radius = 15
@@ -64,11 +68,12 @@ class Snake:
             return True
         return False
 
-class Food:
+class Food(pygame.sprite.Sprite):
     def __init__(self):
+        super().__init__()
         self.image = pygame.image.load("apple.jpg")
         self.surf = pygame.Surface((10, 10))
-        self.rect = self.surf.get_rect(center=(random.randint(5, W - 40), 0))
+        self.rect = self.surf.get_rect(center=(random.randint(5, W - 5), 0))
         self.x = random.randint(0, W)
         self.y = random.randint(0, H)
 
@@ -76,14 +81,16 @@ class Food:
         self.x = random.randint(0, W)
         self.y = random.randint(0, H)
 
-P1 = Snake(random.randint(0, W), random.randint(0, H))
-P2 = Snake(random.randint(0, W), random.randint(0, H))
+P1 = Snake()
+P2 = Snake()
 F1 = Food()
 
-done = False
-
-snake_1 = pygame.sprite.Group()
-snake_1.add(P1)
+apples = pygame.sprite.Group()
+apples.add(F1)
+all_sprites = pygame.sprite.Group()
+all_sprites.add(P1)
+all_sprites.add(P2)
+all_sprites.add(F1)
 
 def Move_on_the_screen(P, key):
     if key == pygame.K_RIGHT and P.dx != -d:
@@ -111,6 +118,8 @@ def Move_on_the_screen(P, key):
         P.dx = 0
         P.dy = d
 
+done = False
+
 while not done:
     pygame.time.delay(60)
     for event in pygame.event.get():
@@ -118,6 +127,7 @@ while not done:
             done = True
         if event.type == pygame.KEYDOWN:
             Move_on_the_screen(P1, event.type)
+        if event.type == pygame.KEYDOWN:
             Move_on_the_screen(P2, event.type)
 
     if P1.eat(F1.x, F1.y):
@@ -127,8 +137,23 @@ while not done:
     if P2.eat(F1.x, F1.y):
         P2.is_add = True
         F1.new()
-
-    screen.fill((0, 0, 0))
     P1.move()
+    P2.move()
+    screen.fill((0, 0, 0))
+    P1.draw()
+    P2.draw()
+    pygame.display.flip()
+    '''
+        if pygame.sprite.spritecollideany(P1, apples):
+            pygame.mixer.Sound('crash.wav').play()
+            time.sleep(1)
 
-    pygame.display.update()
+            screen.fill(RED)
+
+            pygame.display.update()
+            for i in all_sprites:
+                i.kill()
+            time.sleep(2)
+            pygame.quit()
+    '''
+pygame.display.update()
